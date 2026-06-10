@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanzas en Pareja - Control de Presupuesto Mensual</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <header id="main-header" class="bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md sticky top-0 z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div id="logo-container" class="bg-white text-emerald-600 p-2.5 rounded-xl shadow-inner transition-all duration-300">
+                    <i class="fa-solid fa-wallet text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Finanzas en Pareja</h1>
+                    <p class="text-xs text-emerald-100" id="header-subtitle">Presupuesto y Control de Gastos Mensuales</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 w-full sm:w-auto justify-end">
+                <div id="calendar-badge" class="bg-emerald-800/40 px-3 py-1.5 rounded-lg border border-emerald-500/30 text-xs sm:text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span id="current-month-display">Mes Actual</span>
+                </div>
+                <button onclick="resetData()" class="bg-white/10 hover:bg-white/20 transition-all text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 border border-white/20 whitespace-nowrap">
+                    <i class="fa-solid fa-arrows-rotate"></i> Reiniciar Mes
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="bg-slate-200 border-b border-slate-300 py-2 sticky top-[73px] z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 overflow-x-auto custom-scrollbar" id="tabs-container">
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 mb-8">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="p-1.5 bg-slate-100 text-slate-600 rounded-lg">
+                    <i class="fa-solid fa-user-gear text-sm"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-700">Configuración de la Plantilla (Identidades)</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                    <input type="text" id="label-p1-input" oninput="updatePartnerLabelsAndNames()" class="bg-transparent border-b border-slate-300 focus:border-indigo-500 font-bold text-xs uppercase text-slate-600 outline-none py-1 w-full sm:w-28" value="ESPOSO">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <input type="text" id="name-p1-input" oninput="updatePartnerLabelsAndNames()" class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-slate-400" placeholder="Ingresar nombre">
+                    </div>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                    <input type="text" id="label-p2-input" oninput="updatePartnerLabelsAndNames()" class="bg-transparent border-b border-slate-300 focus:border-teal-500 font-bold text-xs uppercase text-slate-600 outline-none py-1 w-full sm:w-28" value="ESPOSA">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 text-xs">
+                            <i class="fa-solid fa-user-dress"></i>
+                        </div>
+                        <input type="text" id="name-p2-input" oninput="updatePartnerLabelsAndNames()" class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-slate-400" placeholder="Ingresar nombre">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 mb-8">
+            <button onclick="toggleSummaryDashboard()" class="w-full flex justify-between items-center text-left focus:outline-none">
+                <div class="flex items-center gap-3">
+                    <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <i class="fa-solid fa-table-list text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800">Dashboard de Resumen Anual</h2>
+                        <p class="text-xs text-slate-400">Historial consolidado y vinculación de todos los meses registrados</p>
+                    </div>
+                </div>
+                <i id="summary-chevron" class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-200"></i>
+            </button>
+            
+            <div id="summary-dashboard-content" class="hidden mt-6 overflow-x-auto border-t border-slate-100 pt-4">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead>
+                        <tr class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50">
+                            <th class="py-3 px-4 rounded-l-xl">Mes / Año</th>
+                            <th class="py-3 px-4 text-right">Monto Mes Anterior</th>
+                            <th class="py-3 px-4 text-right">Ingresos Propios</th>
+                            <th class="py-3 px-4 text-right">Gastos Totales</th>
+                            <th class="py-3 px-4 text-right">Ahorro Depositado</th>
+                            <th class="py-3 px-4 text-right rounded-r-xl">Balance Final</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resumen-general-rows" class="divide-y divide-slate-100 text-slate-700">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <div id="welcome-banner" class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-xl shadow-sm mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-all duration-300">
+            <div class="flex items-start space-x-3">
+                <i id="welcome-info-icon" class="fa-solid fa-circle-info text-emerald-600 text-xl mt-0.5 transition-all duration-300"></i>
+                <div>
+                    <h3 class="font-semibold text-emerald-900 text-sm md:text-base" id="welcome-title">¡Bienvenidos a su gestor financiero!</h3>
+                    <p class="text-xs md:text-sm text-emerald-700 mt-0.5">Control inteligente para el desarrollo y metas de nuestro hogar.</p>
+                </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                <div id="funds-container" class="flex items-center gap-2 bg-white p-2 rounded-xl border border-emerald-200 shadow-sm flex-1 sm:flex-initial transition-all duration-300">
+                    <label for="monto-mes-anterior-input" class="text-xs font-bold text-indigo-800 uppercase tracking-wider pl-1 whitespace-nowrap">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Fondos Mes Anterior:
+                    </label>
+                    <div class="relative rounded-lg min-w-[100px] sm:min-w-[120px] flex-1">
+                        <div class="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                            <span class="text-slate-400 text-xs font-medium">L.</span>
+                        </div>
+                        <input type="number" step="0.01" id="monto-mes-anterior-input" oninput="updateMontoMesAnteriorState()" class="block w-full pl-6 pr-2 py-1 bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div id="budget-select-container" class="flex items-center gap-2 bg-white p-2 rounded-xl border border-emerald-200 shadow-sm flex-1 sm:flex-initial transition-all duration-300 hidden">
+                    <label for="budget-month-select" class="text-xs font-bold text-emerald-800 uppercase tracking-wider pl-1 whitespace-nowrap" id="budget-select-label">Presupuesto de:</label>
+                    <input type="month" id="budget-month-select" onchange="changeMonthBudget()" class="bg-slate-50 border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full md:w-auto">
+                </div>
+            </div>
+        </div>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">
+                <div class="flex justify-between items-start mb-4">
+                    <div id="kpi-inc-icon" class="p-3 bg-emerald-50 text-emerald-600 rounded-xl transition-all duration-300">
+                        <i class="fa-solid fa-money-bill-trend-up text-xl"></i>
+                    </div>
+                    <span id="kpi-inc-badge" class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full transition-all duration-300">Ingresos</span>
+                </div>
+                <h4 class="text-slate-500 text-sm font-medium">Ingresos Totales</h4>
+                <div class="text-2xl font-bold text-slate-900 mt-1" id="kpi-ingresos">L. 0.00</div>
+                <p class="text-xs text-slate-400 mt-2 flex items-center gap-1" id="kpi-ingresos-subtext">
+                    <i class="fa-solid fa-circle-nodes"></i> Suma de salarios y extras
+                </p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
+                        <i class="fa-solid fa-hand-holding-dollar text-xl"></i>
+                    </div>
+                    <span class="text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full" id="percent-gastado">0% Gastado</span>
+                </div>
+                <h4 class="text-slate-500 text-sm font-medium">Gastos Totales</h4>
+                <div class="text-2xl font-bold text-slate-900 mt-1" id="kpi-gastos">L. 0.00</div>
+                <div class="w-full bg-slate-100 rounded-full h-1.5 mt-3">
+                    <div id="bar-gastado" class="bg-rose-500 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                        <i class="fa-solid fa-piggy-bank text-xl"></i>
+                    </div>
+                    <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full" id="percent-ahorro-kpi">Meta: 15%</span>
+                </div>
+                <h4 class="text-slate-500 text-sm font-medium">Ahorro Real Depositado</h4>
+                <div class="text-2xl font-bold text-slate-900 mt-1" id="kpi-ahorro">L. 0.00</div>
+                <p class="text-xs text-slate-400 mt-2" id="ahorro-meta-info">Meta Proyectada: L. 0.00</p>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300" id="kpi-saldo-card">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-amber-50 text-amber-600 rounded-xl" id="kpi-saldo-icon">
+                        <i class="fa-solid fa-scale-balanced text-xl"></i>
+                    </div>
+                    <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full" id="kpi-saldo-status">Sin datos</span>
+                </div>
+                <h4 class="text-slate-500 text-sm font-medium">Saldo Disponible</h4>
+                <div class="text-2xl font-bold text-slate-900 mt-1" id="kpi-saldo">L. 0.00</div>
+                <p class="text-xs text-slate-400 mt-2" id="kpi-saldo-formula">Fórmula: Ingreso - Gasto - Ahorro Real</p>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i id="salarios-icon" class="fa-solid fa-building-columns text-emerald-600 transition-all duration-300"></i>
+                            1. Salarios Base Mensuales
+                        </h3>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label id="label-salario-p1" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Salario Integrante 1</label>
+                            <div class="relative rounded-xl shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-400 font-medium">L.</span>
+                                </div>
+                                <input type="number" step="0.01" id="salario-mi" oninput="updateIngresosState()" class="block w-full pl-8 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:bg-white text-slate-800 font-medium transition-all" placeholder="0.00">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label id="label-salario-p2" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Salario Integrante 2</label>
+                            <div class="relative rounded-xl shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-400 font-medium">L.</span>
+                                </div>
+                                <input type="number" step="0.01" id="salario-esposa" oninput="updateIngresosState()" class="block w-full pl-8 pr-3 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:bg-white text-slate-800 font-medium transition-all" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="salarios-total-badge" class="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-emerald-800 bg-emerald-50/50 p-3 rounded-xl transition-all duration-300">
+                    <span class="text-xs font-semibold">Total Salarios Base:</span>
+                    <span class="font-bold text-sm" id="salarios-base-total">L. 0.00</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-bullseye text-blue-600"></i>
+                            2. Meta de Ahorro Proyectada
+                        </h3>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Porcentaje Objetivo (%)</label>
+                            <div class="flex rounded-xl shadow-sm">
+                                <input type="number" step="0.5" min="0" max="100" id="ahorro-percent-input" oninput="inputMetaPercentChanged()" class="block w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800 font-semibold" placeholder="15">
+                                <span class="inline-flex items-center px-3 rounded-r-xl border border-l-0 border-slate-200 bg-slate-100 text-slate-500 font-bold text-sm">%</span>
+                            </div>
+                            <input type="range" id="ahorro-rango" min="0" max="50" step="1" value="15" oninput="rangeMetaPercentChanged(this.value)" class="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600 mt-2">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">O ingresar Monto Fijo en Dinero</label>
+                            <div class="relative rounded-xl shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-slate-400 font-medium">L.</span>
+                                </div>
+                                <input type="number" step="0.01" min="0" id="ahorro-monto-input" oninput="inputMetaMontoChanged()" class="block w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white text-slate-800 font-semibold" placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 bg-blue-50 p-3 rounded-xl border border-blue-100 flex justify-between items-center text-xs">
+                    <span class="text-slate-500 font-medium">Meta teórica calculada:</span>
+                    <span class="font-bold text-blue-700" id="ahorro-monto-calculado-label">L. 0.00</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-3 pb-3 border-b border-slate-100">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-vault text-amber-500"></i>
+                            3. Control de Depósito a Ahorros
+                        </h3>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-3">Ingresen la cantidad exacta que <strong>realmente</strong> transfirieron a la cuenta de ahorros:</p>
+                    
+                    <div class="space-y-3">
+                        <div class="relative rounded-xl shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-slate-400 font-medium">L.</span>
+                            </div>
+                            <input type="number" step="0.01" min="0" id="ahorro-real-deposito-input" oninput="inputAhorroRealChanged()" class="block w-full pl-8 pr-12 py-2.5 bg-amber-50/40 border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white text-slate-900 font-bold" placeholder="0.00">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                <button onclick="copiarMetaAReal()" class="text-[10px] bg-amber-200/60 hover:bg-amber-200 text-amber-800 px-1.5 py-1 rounded font-bold uppercase transition" title="Copiar meta exacta">Meta</button>
+                            </div>
+                        </div>
+
+                        <div id="cumplimiento-badge-container" class="p-3 rounded-xl border flex items-center justify-between text-xs bg-slate-50 border-slate-200">
+                            <div class="flex items-center space-x-2">
+                                <span id="cumplimiento-icon" class="text-slate-400"><i class="fa-solid fa-circle-minus"></i></span>
+                                <span id="cumplimiento-text" class="font-medium text-slate-600">Sin depósitos registrados</span>
+                            </div>
+                            <span id="cumplimiento-percent" class="font-bold text-slate-700">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 text-center bg-slate-50 p-2 rounded-xl text-[10px] text-slate-500 flex justify-between font-mono">
+                    <span>Meta Fiel: <strong id="real-meta-txt">L. 0.00</strong></span>
+                    <span>Diferencia: <strong id="real-diff-txt" class="text-slate-600">L. 0.00</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-8">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-slate-100 mb-6">
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                        <span id="inc-extra-icon-box" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 text-sm transition-all duration-300">
+                            <i class="fa-solid fa-money-bill-wave"></i>
+                        </span>
+                        Ingresos Extras / Adicionales
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">Bonos, consultorías, ventas extras, remesas o cualquier entrada no recurrente</p>
+                </div>
+                <button id="add-income-btn" onclick="openAddIngresoModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5 self-start sm:self-auto">
+                    <i class="fa-solid fa-circle-plus"></i> Añadir Ingreso Extra
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-100">
+                    <thead>
+                        <tr class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/70">
+                            <th class="py-3 px-4 rounded-l-xl">Responsable</th>
+                            <th class="py-3 px-4">Categoría</th>
+                            <th class="py-3 px-4">Concepto / Procedencia</th>
+                            <th class="py-3 px-4 text-right">Monto</th>
+                            <th class="py-3 px-4 text-center rounded-r-xl w-20">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lista-ingresos-extras" class="divide-y divide-slate-50 text-sm">
+                    </tbody>
+                </table>
+                <div id="no-ingresos-alert" class="text-center py-6 text-slate-400 text-xs">
+                    <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-300 block"></i>
+                    No hay ingresos adicionales registrados este mes.
+                </div>
+            </div>
+
+            <div id="total-inc-extra-badge" class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center bg-emerald-50/20 p-3 rounded-xl transition-all duration-300">
+                <span class="text-xs font-semibold text-emerald-900" id="total-inc-extra-label">Total Ingresos Extras:</span>
+                <span class="font-bold text-emerald-700" id="total-ingresos-extras-calc">L. 0.00</span>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            
+            <div class="lg:col-span-2 space-y-8">
+                
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-slate-100 mb-6">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 text-sm">
+                                    <i class="fa-solid fa-house-lock"></i>
+                                </span>
+                                Gastos Fijos
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Obligaciones periódicas invariables (Renta, servicios, iglesia, tarjetas)</p>
+                        </div>
+                        <button onclick="openAddModal('Fijo')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5 self-start sm:self-auto">
+                            <i class="fa-solid fa-circle-plus"></i> Añadir Gasto Fijo
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-100">
+                            <thead>
+                                <tr class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/70">
+                                    <th class="py-3 px-4 rounded-l-xl">Responsable</th>
+                                    <th class="py-3 px-4">Categoría</th>
+                                    <th class="py-3 px-4">Descripción / Proveedor</th>
+                                    <th class="py-3 px-4 text-right">Monto</th>
+                                    <th class="py-3 px-4 text-center rounded-r-xl w-20">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-gastos-fijos" class="divide-y divide-slate-50 text-sm">
+                            </tbody>
+                        </table>
+                        <div id="no-fijos-alert" class="text-center py-8 text-slate-400 text-xs">
+                            <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-300 block"></i>
+                            No hay gastos fijos registrados.
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-slate-600 bg-indigo-50/20 p-3 rounded-xl">
+                        <span class="text-xs font-semibold text-indigo-900">Total Gastos Fijos:</span>
+                        <span class="font-bold text-indigo-700" id="total-fijos">L. 0.00</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-slate-100 mb-6">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-rose-50 text-rose-600 text-sm">
+                                    <i class="fa-solid fa-cart-shopping"></i>
+                                </span>
+                                Gastos Extras / Variables
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-1">Salidas, imprevistos, gustos personales u ocio</p>
+                        </div>
+                        <button onclick="openAddModal('Variable')" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5 self-start sm:self-auto">
+                            <i class="fa-solid fa-circle-plus"></i> Añadir Gasto Extra
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-slate-100">
+                            <thead>
+                                <tr class="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/70">
+                                    <th class="py-3 px-4 rounded-l-xl">Responsable</th>
+                                    <th class="py-3 px-4">Categoría</th>
+                                    <th class="py-3 px-4">Concepto</th>
+                                    <th class="py-3 px-4 text-right">Monto</th>
+                                    <th class="py-3 px-4 text-center rounded-r-xl w-20">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-gastos-variables" class="divide-y divide-slate-50 text-sm">
+                            </tbody>
+                        </table>
+                        <div id="no-variables-alert" class="text-center py-8 text-slate-400 text-xs">
+                            <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-300 block"></i>
+                            No hay gastos variables o extras registrados.
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex justify-between items-center text-slate-600 bg-rose-50/20 p-3 rounded-xl">
+                        <span class="text-xs font-semibold text-rose-950">Total Gastos Extras:</span>
+                        <span class="font-bold text-rose-700" id="total-variables">L. 0.00</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-3 pb-3 border-b border-slate-100">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-purple-600"></i>
+                                Distribución del Gasto
+                            </h3>
+                        </div>
+                        <div class="relative h-44 flex items-center justify-center">
+                            <canvas id="chartGastos"></canvas>
+                            <div id="chart-no-data" class="absolute inset-0 bg-white/95 flex flex-col items-center justify-center text-slate-400 text-xs text-center p-4">
+                                <i class="fa-solid fa-chart-line text-2xl mb-2 text-slate-300"></i>
+                                <span>Registra gastos para visualizar tu distribución</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <span class="text-[10px] text-slate-400">Gráfico en tiempo real por categorías</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-heart-pulse text-rose-500"></i>
+                        Diagnóstico de Salud Financiera
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3 bg-slate-50 p-3 rounded-xl">
+                            <div class="text-2xl" id="salud-emoji">🤔</div>
+                            <div>
+                                <h4 class="font-semibold text-xs text-slate-800" id="salud-titulo">Sin Datos Suficientes</h4>
+                                <p class="text-[10px] text-slate-500 mt-0.5" id="salud-descripcion">Introduce tus ingresos y gastos para obtener una auditoría de tu presupuesto.</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-500">Capacidad de Ahorro Ejecutada</span>
+                                <span class="font-semibold text-slate-700" id="salud-capacidad-ahorro">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5">
+                                <div id="bar-capacidad-ahorro" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 text-xs text-indigo-950 space-y-2">
+                            <span class="font-bold text-indigo-900 block"><i class="fa-solid fa-handshake"></i> Consejo del Mes:</span>
+                            <p class="text-[11px] leading-relaxed" id="consejo-aleatorio">Hagan una reunión de 10 minutos al final de cada semana para revisar esta hoja de control y estar en sintonía con las metas de ahorro.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="bg-slate-200/60 rounded-3xl p-6 border border-slate-300/60 shadow-inner">
+            <div class="mb-4 pb-2 border-b border-slate-300 flex items-center gap-2">
+                <i class="fa-solid fa-users-viewfinder text-xl text-slate-700"></i>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-lg">Resumen de Cuentas Individuales</h3>
+                    <p class="text-xs text-slate-500">Cifras separadas de la actividad de cada uno este mes</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div id="avatar-p1" class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow">I1</div>
+                        <div>
+                            <h4 id="summary-title-p1" class="font-bold text-slate-800">Cuentas Integrante 1</h4>
+                            <span class="text-[10px] bg-indigo-50 text-indigo-700 font-semibold px-2 py-0.5 rounded-full border border-indigo-100">Administrador</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-600">
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span>Ingresos (Sueldo + extras):</span>
+                            <span class="font-semibold text-slate-900" id="resumen-ingreso-daniel">L. 0.00</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span>Gastos Fijos ejecutados:</span>
+                            <span class="font-semibold text-indigo-600" id="resumen-fijos-daniel">L. 0.00</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span>Gastos Extras ejecutados:</span>
+                            <span class="font-semibold text-rose-600" id="resumen-variables-daniel">L. 0.00</span>
+                        </div>
+                        <div class="flex justify-between pt-3 font-bold text-slate-800 text-base">
+                            <span id="total-expense-label-p1">Total Gastos:</span>
+                            <span class="text-slate-900" id="resumen-total-gastos-daniel">L. 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div id="avatar-p2" class="w-10 h-10 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-sm shadow">I2</div>
+                        <div>
+                            <h4 id="summary-title-p2" class="font-bold text-slate-800">Cuentas Integrante 2</h4>
+                            <span class="text-[10px] bg-teal-50 text-teal-700 font-semibold px-2 py-0.5 rounded-full border border-teal-100">Socio Co-propietario</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm text-slate-600">
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span>Ingresos (Sueldo + extras):</span>
+                            <span class="font-semibold text-slate-900" id="resumen-ingreso-pamela">L. 0.00</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span>Gastos Fijos ejecutados:</span>
+                            <span class="font-semibold text-teal-600" id="resumen-fijos-pamela">L. 0.00</span>
+                        </div>
+                        <div class="flex justify-between py-1.5 border-b border-slate-50">
+                            <span>Gastos Extras ejecutados:</span>
+                            <span class="font-semibold text-rose-600" id="resumen-variables-pamela">L. 0.00</span>
+                        </div>
+                        <div class="flex justify-between pt-3 font-bold text-slate-800 text-base">
+                            <span id="total-expense-label-p2">Total Gastos:</span>
+                            <span class="text-slate-900" id="resumen-total-gastos-pamela">L. 0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 mt-8">
+            <div class="flex items-center justify-between flex-col sm:flex-row gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-slate-100 text-slate-600 rounded-xl">
+                        <i class="fa-solid fa-palette text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Color de Interfaz Temático</h3>
+                        <p class="text-xs text-slate-400">Personaliza el color de acento principal de esta interfaz para el mes seleccionado.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                    <label for="month-color-picker" class="text-xs font-bold text-slate-600 uppercase tracking-wider pl-1 whitespace-nowrap">Color del Mes:</label>
+                    <select id="month-color-picker" onchange="changeInterfaceColor(this.value)" class="bg-white border border-slate-200 text-slate-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 focus:outline-none">
+                        <option value="emerald">Verde Esmeralda (Defecto)</option>
+                        <option value="indigo">Azul Índigo</option>
+                        <option value="violet">Morado Violeta</option>
+                        <option value="rose">Rosado Enérgico</option>
+                        <option value="cyan">Azul Cian Celeste</option>
+                        <option value="amber">Oro Ámbar</option>
+                        <option value="slate">Gris Elegante</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="modal-gasto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden transform transition-all scale-95 duration-200">
+            <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm uppercase tracking-wider" id="modal-title">Nuevo Gasto</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-gasto" onsubmit="saveGasto(event)" class="p-6 space-y-4">
+                <input type="hidden" id="gasto-index">
+                <input type="hidden" id="gasto-tipo">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Responsable del Pago</label>
+                    <select id="gasto-responsable" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                        <option value="Daniel" id="opt-gasto-p1">Integrante 1</option>
+                        <option value="Pamela" id="opt-gasto-p2">Integrante 2</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Categoría</label>
+                    <select id="gasto-categoria" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Descripción / Establecimiento</label>
+                    <input type="text" id="gasto-nombre" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Ej: Supermercado, Alquiler, Gasolina">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Monto de la Transacción</label>
+                    <div class="relative rounded-xl shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-slate-400 text-sm font-medium">L.</span>
+                        </div>
+                        <input type="number" step="0.01" min="0.01" id="gasto-monto" required class="w-full pl-8 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeModal()" class="w-1/2 px-4 py-2.5 border border-slate-200 text-slate-500 font-semibold rounded-xl text-xs hover:bg-slate-50 transition">Cancelar</button>
+                    <button type="submit" class="w-1/2 px-4 py-2.5 bg-slate-900 text-white font-semibold rounded-xl text-xs">Guardar Gasto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-ingreso-extra" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden transform transition-all scale-95 duration-200">
+            <div id="modal-ingreso-header" class="bg-gradient-to-r from-emerald-800 to-emerald-900 p-4 text-white flex justify-between items-center transition-all duration-300">
+                <h3 class="font-bold text-sm uppercase tracking-wider" id="modal-ingreso-title">Nuevo Ingreso Extra</h3>
+                <button onclick="closeIngresoModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-ingreso-extra" onsubmit="saveIngresoExtra(event)" class="p-6 space-y-4">
+                <input type="hidden" id="ingreso-index">
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">¿Quién lo generó?</label>
+                    <select id="ingreso-responsable" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                        <option value="P1" id="opt-ingreso-p1">Integrante 1</option>
+                        <option value="P2" id="opt-ingreso-p2">Integrante 2</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Categoría</label>
+                    <select id="ingreso-categoria" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                        <option value="Negocio/Ventas">Negocio / Ventas</option>
+                        <option value="Consultoría/Freelance">Consultoría / Freelance</option>
+                        <option value="Bono/Aguinaldo">Bono / Aguinaldo</option>
+                        <option value="Intereses/Inversiones">Intereses / Inversiones</option>
+                        <option value="Remesas">Remesas</option>
+                        <option value="Otros Ingresos">Otros Adicionales</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Concepto / Procedencia</label>
+                    <input type="text" id="ingreso-nombre" required class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Ej: Venta de artículo, Bono navideño, Remesa">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Monto del Ingreso</label>
+                    <div class="relative rounded-xl shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-slate-400 text-sm font-medium">L.</span>
+                        </div>
+                        <input type="number" step="0.01" min="0.01" id="ingreso-monto" required class="w-full pl-8 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeIngresoModal()" class="w-1/2 px-4 py-2.5 border border-slate-200 text-slate-500 font-semibold rounded-xl text-xs hover:bg-slate-50 transition">Cancelar</button>
+                    <button type="submit" id="submit-ingreso-btn" class="w-1/2 px-4 py-2.5 bg-emerald-600 text-white font-semibold rounded-xl text-xs transition-all duration-300">Guardar Ingreso</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-agregar-mes" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full overflow-hidden transform transition-all scale-95 duration-200">
+            <div class="bg-indigo-600 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm uppercase tracking-wider"><i class="fa-solid fa-calendar-plus mr-1"></i> Agregar Nuevo Mes</h3>
+                <button onclick="closeAgregarMesModal()" class="text-indigo-200 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Selecciona el Año y Mes</label>
+                    <input type="month" id="modal-month-picker" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex space-x-3 pt-2">
+                    <button type="button" onclick="closeAgregarMesModal()" class="w-1/2 px-4 py-2.5 border border-slate-200 text-slate-500 font-semibold rounded-xl text-xs hover:bg-slate-50 transition">Cancelar</button>
+                    <button type="button" onclick="confirmarAgregarMes()" class="w-1/2 px-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl text-xs hover:bg-indigo-700 transition shadow-sm">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 pointer-events-none space-y-2"></div>
+
+    <script>
+        const categoriasFijos = ['Alquiler/Vivienda', 'Servicios Básicos', 'Alimentación', 'Iglesia', 'Tarjetas/Créditos', 'Educación', 'Seguros/Salud', 'Suscripciones', 'Otros Fijos'];
+        const categoriasVariables = ['Salidas/Restaurantes', 'Ropa/Calzado', 'Cuidado Personal', 'Combustible/Transporte', 'Regalos/Detalles', 'Ocio/Entretenimiento', 'Imprevistos/Reparaciones', 'Gustos Propios', 'Otros Variables'];
+
+        const colorMapClasses = {
+            emerald: { header: 'from-emerald-600 to-teal-700', text: 'text-emerald-600', textLight: 'text-emerald-100', bgLight: 'bg-emerald-50', border: 'border-emerald-500', borderLight: 'border-emerald-200', badge: 'bg-emerald-800/40', btn: 'bg-emerald-600 hover:bg-emerald-700', fill: 'bg-emerald-50/20', darkG: 'from-emerald-800 to-emerald-900', solid: 'bg-emerald-600' },
+            indigo: { header: 'from-indigo-600 to-blue-700', text: 'text-indigo-600', textLight: 'text-indigo-100', bgLight: 'bg-indigo-50', border: 'border-indigo-500', borderLight: 'border-indigo-200', badge: 'bg-indigo-800/40', btn: 'bg-indigo-600 hover:bg-indigo-700', fill: 'bg-indigo-50/20', darkG: 'from-indigo-800 to-indigo-900', solid: 'bg-indigo-700' },
+            violet: { header: 'from-violet-600 to-purple-700', text: 'text-violet-600', textLight: 'text-violet-100', bgLight: 'bg-violet-50', border: 'border-violet-500', borderLight: 'border-violet-200', badge: 'bg-violet-800/40', btn: 'bg-violet-600 hover:bg-violet-700', fill: 'bg-violet-50/20', darkG: 'from-violet-800 to-violet-900', solid: 'bg-violet-700' },
+            rose: { header: 'from-rose-600 to-pink-700', text: 'text-rose-600', textLight: 'text-rose-100', bgLight: 'bg-rose-50', border: 'border-rose-500', borderLight: 'border-rose-200', badge: 'bg-rose-800/40', btn: 'bg-rose-600 hover:bg-rose-700', fill: 'bg-rose-50/20', darkG: 'from-rose-800 to-rose-900', solid: 'bg-rose-700' },
+            cyan: { header: 'from-cyan-600 to-blue-600', text: 'text-cyan-600', textLight: 'text-cyan-100', bgLight: 'bg-cyan-50', border: 'border-cyan-500', borderLight: 'border-cyan-200', badge: 'bg-cyan-800/40', btn: 'bg-cyan-600 hover:bg-cyan-700', fill: 'bg-cyan-50/20', darkG: 'from-cyan-800 to-cyan-900', solid: 'bg-cyan-700' },
+            amber: { header: 'from-amber-500 to-orange-600', text: 'text-amber-600', textLight: 'text-amber-100', bgLight: 'bg-amber-50', border: 'border-amber-500', borderLight: 'border-amber-200', badge: 'bg-amber-600/40', btn: 'bg-amber-500 hover:bg-amber-600', fill: 'bg-amber-50/20', darkG: 'from-amber-700 to-orange-800', solid: 'bg-amber-600' },
+            slate: { header: 'from-slate-600 to-zinc-700', text: 'text-slate-600', textLight: 'text-slate-100', bgLight: 'bg-slate-100', border: 'border-slate-500', borderLight: 'border-slate-200', badge: 'bg-slate-700/40', btn: 'bg-slate-600 hover:bg-slate-700', fill: 'bg-slate-100/30', darkG: 'from-slate-800 to-zinc-900', solid: 'bg-slate-600' }
+        };
+
+        let currentMonthKey = '';
+        let trackedMonthsList = [];
+        let chartInstance = null;
+
+        let state = {
+            montoMesAnterior: 0,
+            salariosBase: { daniel: 0, pamela: 0 },
+            metaAhorroPercent: 15,
+            metaAhorroMonto: 0,
+            ahorroRealDepositado: 0,
+            ingresosExtras: [],
+            gastos: [],
+            partnerConfig: { labelP1: 'ESPOSO', nameP1: 'Daniel', labelP2: 'ESPOSA', nameP2: 'Pamela' },
+            themeColor: 'emerald'
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initSystem();
+        });
+
+        function initSystem() {
+            const rawList = localStorage.getItem('presupuesto_pareja_tracked_months');
+            if (rawList) {
+                try { trackedMonthsList = JSON.parse(rawList); } catch(e) { trackedMonthsList = []; }
+            }
+            
+            if (trackedMonthsList.length === 0) {
+                const hoy = new Date();
+                const mStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+                trackedMonthsList.push(mStr);
+                saveTrackedMonthsList();
+            }
+            
+            trackedMonthsList.sort();
+            const ultimoMes = trackedMonthsList[trackedMonthsList.length - 1];
+            
+            document.getElementById('budget-month-select').value = ultimoMes;
+            loadMonthData(ultimoMes);
+        }
+
+        function saveTrackedMonthsList() {
+            localStorage.setItem('presupuesto_pareja_tracked_months', JSON.stringify(trackedMonthsList));
+        }
+
+        function buildTabs(activeMonthStr) {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+
+            trackedMonthsList.forEach(mStr => {
+                const [y, m] = mStr.split('-');
+                const dateObj = new Date(y, m - 1, 1);
+                const label = dateObj.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
+                
+                const isActive = mStr === activeMonthStr;
+                const tabBtn = document.createElement('div');
+                
+                if (isActive) {
+                    const dynamicHeaderColor = colorMapClasses[state.themeColor || 'emerald'].solid;
+                    tabBtn.className = `${dynamicHeaderColor} text-white text-xs font-bold px-3 py-1.5 rounded-t-xl shadow-inner flex items-center gap-2 shrink-0 cursor-pointer`;
+                } else {
+                    tabBtn.className = "bg-slate-300 hover:bg-slate-400/80 text-slate-700 text-xs font-semibold px-3 py-1.5 rounded-t-xl transition flex items-center gap-2 shrink-0 cursor-pointer";
+                }
+                
+                tabBtn.innerHTML = `
+                    <span class="flex items-center gap-1">
+                        <i class="fa-solid fa-folder-${isActive ? 'open' : 'closed'} text-[11px]"></i>
+                        ${label.toUpperCase()}
+                    </span>
+                    <button onclick="deleteTab('${mStr}', event)" class="text-[10px] hover:text-red-500 transition-colors pl-1 p-0.5" title="Eliminar este mes">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                
+                tabBtn.onclick = () => {
+                    document.getElementById('budget-month-select').value = mStr;
+                    loadMonthData(mStr);
+                };
+                container.appendChild(tabBtn);
+            });
+
+            const addBtn = document.createElement('button');
+            addBtn.className = "bg-indigo-600 hover:bg-indigo-700 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shadow-sm transition ml-2 shrink-0";
+            addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+            addBtn.title = "Agregar pestaña de nuevo mes";
+            
+            // MODIFICACIÓN: En lugar de llamar al picker del navegador de forma oculta, abre el nuevo modal
+            addBtn.onclick = (e) => { 
+                e.stopPropagation();
+                openAgregarMesModal(); 
+            };
+            container.appendChild(addBtn);
+        }
+
+        // NUEVAS FUNCIONES PARA EL MODAL DE AGREGAR MES
+        function openAgregarMesModal() {
+            const hoy = new Date();
+            const mStr = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('modal-month-picker').value = mStr;
+            document.getElementById('modal-agregar-mes').classList.remove('hidden');
+        }
+
+        function closeAgregarMesModal() {
+            document.getElementById('modal-agregar-mes').classList.add('hidden');
+        }
+
+        function confirmarAgregarMes() {
+            const pickerValue = document.getElementById('modal-month-picker').value;
+            if (!pickerValue) return;
+            
+            document.getElementById('budget-month-select').value = pickerValue;
+            closeAgregarMesModal();
+            changeMonthBudget();
+        }
+
+        // MODIFICACIÓN: Función helper para buscar y obtener los últimos nombres ingresados en el sistema
+        function obtenerUltimaConfiguracionPareja() {
+            if (trackedMonthsList.length === 0) return null;
+            
+            // Buscamos de atrás hacia adelante en la lista de meses existentes
+            for (let i = trackedMonthsList.length - 1; i >= 0; i--) {
+                const storageKey = `presupuesto_pareja_${trackedMonthsList[i]}`;
+                const rawData = localStorage.getItem(storageKey);
+                if (rawData) {
+                    try {
+                        const parsed = JSON.parse(rawData);
+                        if (parsed.partnerConfig && parsed.partnerConfig.nameP1 && parsed.partnerConfig.nameP2) {
+                            return parsed.partnerConfig;
+                        }
+                    } catch(e) {}
+                }
+            }
+            return null;
+        }
+
+        function loadMonthData(monthStr) {
+            if (!trackedMonthsList.includes(monthStr)) {
+                trackedMonthsList.push(monthStr);
+                saveTrackedMonthsList();
+            }
+
+            currentMonthKey = `presupuesto_pareja_${monthStr}`;
+            const [y, m] = monthStr.split('-');
+            const dateObj = new Date(y, m - 1, 1);
+            const labelMesText = dateObj.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            document.getElementById('current-month-display').innerText = labelMesText.toUpperCase();
+
+            const raw = localStorage.getItem(currentMonthKey);
+            if (raw) {
+                try {
+                    state = JSON.parse(raw);
+                    if (!state.partnerConfig) {
+                        // MODIFICACIÓN: Si el mes no tiene nombres guardados, intentamos heredar el último configurado antes de usar el por defecto
+                        const ultimaConfig = obtenerUltimaConfiguracionPareja();
+                        state.partnerConfig = ultimaConfig || { labelP1: 'ESPOSO', nameP1: 'Daniel', labelP2: 'ESPOSA', nameP2: 'Pamela' };
+                    }
+                    if (!state.themeColor) state.themeColor = 'emerald';
+                } catch(e) {
+                    resetStateObj();
+                }
+            } else {
+                resetStateObj();
+                // MODIFICACIÓN: Para meses completamente nuevos, hereda automáticamente la última identidad que el usuario ingresó
+                const ultimaConfig = obtenerUltimaConfiguracionPareja();
+                if (ultimaConfig) {
+                    state.partnerConfig = ultimaConfig;
+                }
+            }
+
+            document.getElementById('label-p1-input').value = state.partnerConfig.labelP1 || 'ESPOSO';
+            document.getElementById('name-p1-input').value = state.partnerConfig.nameP1 || 'Daniel';
+            document.getElementById('label-p2-input').value = state.partnerConfig.labelP2 || 'ESPOSA';
+            document.getElementById('name-p2-input').value = state.partnerConfig.nameP2 || 'Pamela';
+
+            document.getElementById('month-color-picker').value = state.themeColor || 'emerald';
+
+            document.getElementById('monto-mes-anterior-input').value = state.montoMesAnterior > 0 ? state.montoMesAnterior : '';
+            document.getElementById('salario-mi').value = state.salariosBase.daniel > 0 ? state.salariosBase.daniel : '';
+            document.getElementById('salario-esposa').value = state.salariosBase.pamela > 0 ? state.salariosBase.pamela : '';
+            document.getElementById('ahorro-percent-input').value = state.metaAhorroPercent;
+            document.getElementById('ahorro-rango').value = state.metaAhorroPercent;
+            document.getElementById('ahorro-monto-input').value = state.metaAhorroMonto > 0 ? state.metaAhorroMonto : '';
+            document.getElementById('ahorro-real-deposito-input').value = state.ahorroRealDepositado > 0 ? state.ahorroRealDepositado : '';
+
+            applyThemeColor(state.themeColor);
+            updatePartnerLabelsAndNames(false);
+            buildTabs(monthStr);
+            calculateAll(false);
+            renderSummaryDashboard();
+        }
+
+        function resetStateObj() {
+            state = {
+                montoMesAnterior: 0,
+                salariosBase: { daniel: 0, pamela: 0 },
+                metaAhorroPercent: 15,
+                metaAhorroMonto: 0,
+                ahorroRealDepositado: 0,
+                ingresosExtras: [],
+                gastos: [],
+                partnerConfig: { labelP1: 'ESPOSO', nameP1: 'Daniel', labelP2: 'ESPOSA', nameP2: 'Pamela' },
+                themeColor: 'emerald'
+            };
+        }
+
+        function saveToLocalStorage() {
+            if (currentMonthKey) {
+                localStorage.setItem(currentMonthKey, JSON.stringify(state));
+            }
+        }
+
+        function changeMonthBudget() {
+            const picker = document.getElementById('budget-month-select');
+            if (picker.value) {
+                loadMonthData(picker.value);
+            }
+        }
+
+        function deleteTab(mStr, event) {
+            event.stopPropagation();
+            if (confirm(`¿Estás seguro de que deseas eliminar permanentemente todo el registro de ${mStr}?`)) {
+                localStorage.removeItem(`presupuesto_pareja_${mStr}`);
+                trackedMonthsList = trackedMonthsList.filter(item => item !== mStr);
+                saveTrackedMonthsList();
+                
+                if (trackedMonthsList.length === 0) {
+                    const hoy = new Date();
+                    const nuevoMes = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+                    trackedMonthsList.push(nuevoMes);
+                    saveTrackedMonthsList();
+                }
+                
+                trackedMonthsList.sort();
+                const selector = document.getElementById('budget-month-select');
+                if (selector.value === mStr) {
+                    const mesARemplazar = trackedMonthsList[trackedMonthsList.length - 1];
+                    selector.value = mesARemplazar;
+                }
+                loadMonthData(selector.value);
+                showToast('Mes eliminado del sistema.');
+            }
+        }
+
+        function updatePartnerLabelsAndNames(shouldCalculate = true) {
+            const labelP1 = document.getElementById('label-p1-input').value.trim() || "INTEGRANTE 1";
+            const nameP1 = document.getElementById('name-p1-input').value.trim() || "Integrante 1";
+            const labelP2 = document.getElementById('label-p2-input').value.trim() || "INTEGRANTE 2";
+            const nameP2 = document.getElementById('name-p2-input').value.trim() || "Integrante 2";
+
+            state.partnerConfig = { labelP1, nameP1, labelP2, nameP2 };
+
+            document.getElementById('label-salario-p1').innerText = `Salario ${nameP1} (${labelP1})`;
+            document.getElementById('label-salario-p2').innerText = `Salario ${nameP2} (${labelP2})`;
+
+            document.getElementById('summary-title-p1').innerText = `Cuentas de ${nameP1}`;
+            document.getElementById('summary-title-p2').innerText = `Cuentas de ${nameP2}`;
+
+            document.getElementById('avatar-p1').innerText = nameP1.substring(0, 2).toUpperCase();
+            document.getElementById('avatar-p2').innerText = nameP2.substring(0, 2).toUpperCase();
+
+            document.getElementById('opt-gasto-p1').innerText = nameP1;
+            document.getElementById('opt-gasto-p1').value = nameP1;
+            document.getElementById('opt-gasto-p2').innerText = nameP2;
+            document.getElementById('opt-gasto-p2').value = nameP2;
+
+            document.getElementById('opt-ingreso-p1').innerText = nameP1;
+            document.getElementById('opt-ingreso-p1').value = nameP1;
+            document.getElementById('opt-ingreso-p2').innerText = nameP2;
+            document.getElementById('opt-ingreso-p2').value = nameP2;
+
+            if (shouldCalculate) {
+                calculateAll(true); // MODIFICACIÓN: Al escribir en tiempo real, guarda de inmediato para que afecte futuros meses
+            }
+        }
+
+        function changeInterfaceColor(colorName) {
+            state.themeColor = colorName;
+            applyThemeColor(colorName);
+            buildTabs(document.getElementById('budget-month-select').value);
+            saveToLocalStorage();
+        }
+
+        function applyThemeColor(colorName) {
+            const classes = colorMapClasses[colorName || 'emerald'];
+            
+            document.getElementById('main-header').className = `bg-gradient-to-r ${classes.header} text-white shadow-md sticky top-0 z-50 transition-all duration-300`;
+            document.getElementById('logo-container').className = `bg-white ${classes.text} p-2.5 rounded-xl shadow-inner transition-all duration-300`;
+            document.getElementById('calendar-badge').className = `${classes.badge} px-3 py-1.5 rounded-lg border ${classes.border}/30 text-xs sm:text-sm flex items-center gap-2 transition-all duration-300`;
+            document.getElementById('welcome-banner').className = `${classes.bgLight} border-l-4 ${classes.border} p-4 rounded-r-xl shadow-sm mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4 transition-all duration-300`;
+            document.getElementById('welcome-info-icon').className = `${classes.text} text-xl mt-0.5 transition-all duration-300`;
+            document.getElementById('funds-container').className = `flex items-center gap-2 bg-white p-2 rounded-xl border ${classes.borderLight} shadow-sm flex-1 sm:flex-initial transition-all duration-300`;
+            document.getElementById('budget-select-container').className = `flex items-center gap-2 bg-white p-2 rounded-xl border ${classes.borderLight} shadow-sm flex-1 sm:flex-initial transition-all duration-300 hidden`;
+            
+            document.getElementById('kpi-inc-icon').className = `p-3 ${classes.bgLight} ${classes.text} rounded-xl transition-all duration-300`;
+            document.getElementById('kpi-inc-badge').className = `text-xs font-semibold ${classes.text} ${classes.bgLight} px-2.5 py-1 rounded-full transition-all duration-300`;
+            
+            document.getElementById('salarios-icon').className = `fa-solid fa-building-columns ${classes.text} transition-all duration-300`;
+            document.getElementById('salarios-total-badge').className = `mt-6 pt-4 border-t border-slate-100 flex items-center justify-between ${classes.text.replace('text','text-emerald-800')} ${classes.bgLight}/50 p-3 rounded-xl transition-all duration-300`;
+            document.getElementById('inc-extra-icon-box').className = `inline-flex items-center justify-center w-8 h-8 rounded-lg ${classes.bgLight} ${classes.text} text-sm transition-all duration-300`;
+            document.getElementById('add-income-btn').className = `${classes.btn} text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5 self-start sm:self-auto`;
+            document.getElementById('total-inc-extra-badge').className = `mt-4 pt-4 border-t border-slate-100 flex justify-between items-center ${classes.fill} p-3 rounded-xl transition-all duration-300`;
+
+            document.getElementById('modal-ingreso-header').className = `bg-gradient-to-r ${classes.darkG} p-4 text-white flex justify-between items-center transition-all duration-300`;
+            document.getElementById('submit-ingreso-btn').className = `w-1/2 px-4 py-2.5 ${classes.solid} text-white font-semibold rounded-xl text-xs transition-all duration-300`;
+        }
+
+        function updateMontoMesAnteriorState() {
+            state.montoMesAnterior = parseFloat(document.getElementById('monto-mes-anterior-input').value) || 0;
+            calculateAll(true);
+        }
+
+        function updateIngresosState() {
+            state.salariosBase.daniel = parseFloat(document.getElementById('salario-mi').value) || 0;
+            state.salariosBase.pamela = parseFloat(document.getElementById('salario-esposa').value) || 0;
+            calculateAll(true);
+        }
+
+        function obtenerIngresosTotalesRapido() {
+            const anterior = parseFloat(document.getElementById('monto-mes-anterior-input').value) || 0;
+            const base = (parseFloat(document.getElementById('salario-mi').value) || 0) + (parseFloat(document.getElementById('salario-esposa').value) || 0);
+            let ext = 0;
+            state.ingresosExtras.forEach(i => ext += parseFloat(i.monto || 0));
+            return anterior + base + ext;
+        }
+
+        function inputMetaPercentChanged() {
+            let p = parseFloat(document.getElementById('ahorro-percent-input').value);
+            if (isNaN(p) || p < 0) p = 0;
+            if (p > 100) p = 100;
+            state.metaAhorroPercent = p;
+            document.getElementById('ahorro-rango').value = p;
+            calculateAll(true, true);
+        }
+
+        function rangeMetaPercentChanged(val) {
+            const p = parseFloat(val) || 0;
+            state.metaAhorroPercent = p;
+            document.getElementById('ahorro-percent-input').value = p;
+            calculateAll(true, true);
+        }
+
+        function inputMetaMontoChanged() {
+            const m = parseFloat(document.getElementById('ahorro-monto-input').value) || 0;
+            state.metaAhorroMonto = m;
+            const totalIncomes = obtenerIngresosTotalesRapido();
+            if (totalIncomes > 0) {
+                state.metaAhorroPercent = parseFloat(((m / totalIncomes) * 100).toFixed(1));
+                document.getElementById('ahorro-percent-input').value = state.metaAhorroPercent;
+                document.getElementById('ahorro-rango').value = state.metaAhorroPercent;
+            } else {
+                state.metaAhorroPercent = 0;
+                document.getElementById('ahorro-percent-input').value = 0;
+                document.getElementById('ahorro-rango').value = 0;
+            }
+            calculateAll(true, false);
+        }
+
+        function inputAhorroRealChanged() {
+            state.ahorroRealDepositado = parseFloat(document.getElementById('ahorro-real-deposito-input').value) || 0;
+            calculateAll(true, false);
+        }
+
+        function copiarMetaAReal() {
+            state.ahorroRealDepositado = state.metaAhorroMonto;
+            document.getElementById('ahorro-real-deposito-input').value = state.metaAhorroMonto > 0 ? state.metaAhorroMonto : '';
+            calculateAll(true, false);
+            showToast('Meta copiada al depósito real.');
+        }
+
+        function calculateAll(shouldSave = true, recalcularMetaDesdePercent = true) {
+            let totalExtras = 0;
+            let ingresosDaniel = state.salariosBase.daniel;
+            let ingresosPamela = state.salariosBase.pamela;
+
+            const ingresosExtrasContainer = document.getElementById('lista-ingresos-extras');
+            ingresosExtrasContainer.innerHTML = '';
+
+            state.ingresosExtras.forEach((ingreso, idx) => {
+                totalExtras += parseFloat(ingreso.monto);
+                const nameLower = ingreso.responsable.toLowerCase();
+                const p1Lower = state.partnerConfig.nameP1.toLowerCase();
+                if (nameLower === p1Lower || nameLower === 'daniel') {
+                    ingresosDaniel += parseFloat(ingreso.monto);
+                } else {
+                    ingresosPamela += parseFloat(ingreso.monto);
+                }
+                renderIngresoRow(ingresosExtrasContainer, ingreso, idx);
+            });
+
+            document.getElementById('no-ingresos-alert').style.display = state.ingresosExtras.length === 0 ? 'block' : 'none';
+            document.getElementById('total-ingresos-extras-calc').innerText = formatCurrency(totalExtras);
+
+            const baseSalarios = state.salariosBase.daniel + state.salariosBase.pamela;
+            document.getElementById('salarios-base-total').innerText = formatCurrency(baseSalarios);
+
+            const totalIngresos = state.montoMesAnterior + baseSalarios + totalExtras;
+            document.getElementById('kpi-ingresos').innerText = formatCurrency(totalIngresos);
+
+            if (state.montoMesAnterior > 0) {
+                document.getElementById('kpi-ingresos-subtext').innerHTML = `<i class="fa-solid fa-clock-rotate-left"></i> L. ${state.montoMesAnterior.toFixed(0)} provienen del mes anterior`;
+            } else {
+                document.getElementById('kpi-ingresos-subtext').innerHTML = `<i class="fa-solid fa-circle-nodes"></i> Suma de salarios y extras`;
+            }
+
+            if (recalcularMetaDesdePercent) {
+                state.metaAhorroMonto = parseFloat((totalIngresos * (state.metaAhorroPercent / 100)).toFixed(2));
+                document.getElementById('ahorro-monto-input').value = state.metaAhorroMonto > 0 ? state.metaAhorroMonto : '';
+            }
+            document.getElementById('ahorro-monto-calculado-label').innerText = formatCurrency(state.metaAhorroMonto);
+            document.getElementById('real-meta-txt').innerText = formatCurrency(state.metaAhorroMonto);
+
+            const badgeContainer = document.getElementById('cumplimiento-badge-container');
+            const cumpIcon = document.getElementById('cumplimiento-icon');
+            const cumpText = document.getElementById('cumplimiento-text');
+            const cumpPercent = document.getElementById('cumplimiento-percent');
+            const diffTxt = document.getElementById('real-diff-txt');
+
+            let ratioCumplimiento = 0;
+            if (state.metaAhorroMonto > 0) {
+                ratioCumplimiento = (state.ahorroRealDepositado / state.metaAhorroMonto) * 100;
+            } else if (state.ahorroRealDepositado > 0) {
+                ratioCumplimiento = 100;
+            }
+
+            const diferenciaMetaReal = state.ahorroRealDepositado - state.metaAhorroMonto;
+            diffTxt.innerText = formatCurrency(diferenciaMetaReal);
+
+            if (diferenciaMetaReal < 0) {
+                diffTxt.className = "text-rose-600";
+            } else if (diferenciaMetaReal > 0) {
+                diffTxt.className = "text-emerald-600";
+            } else {
+                diffTxt.className = "text-slate-600";
+            }
+
+            if (state.ahorroRealDepositado === 0) {
+                badgeContainer.className = "p-3 rounded-xl border flex items-center justify-between text-xs bg-slate-50 border-slate-200";
+                cumpIcon.innerHTML = '<i class="fa-solid fa-circle-minus text-slate-400"></i>';
+                cumpText.innerText = 'Sin depósitos registrados';
+                cumpText.className = "font-medium text-slate-600";
+                cumpPercent.className = "font-bold text-slate-700";
+                cumpPercent.innerText = "0%";
+            } else if (ratioCumplimiento < 100) {
+                badgeContainer.className = "p-3 rounded-xl border flex items-center justify-between text-xs bg-amber-50 border-amber-200";
+                cumpIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-amber-500"></i>';
+                cumpText.innerText = 'Depósito incompleto';
+                cumpText.className = "font-medium text-amber-800";
+                cumpPercent.className = "font-bold text-amber-700";
+                cumpPercent.innerText = `${ratioCumplimiento.toFixed(0)}%`;
+            } else {
+                badgeContainer.className = "p-3 rounded-xl border flex items-center justify-between text-xs bg-emerald-50 border-emerald-200";
+                cumpIcon.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-500"></i>';
+                cumpText.innerText = diferenciaMetaReal > 0 ? '¡Meta superada con éxito!' : '¡Meta de ahorro cumplida!';
+                cumpText.className = "font-medium text-emerald-800";
+                cumpPercent.className = "font-bold text-emerald-700";
+                cumpPercent.innerText = `${ratioCumplimiento.toFixed(0)}%`;
+            }
+
+            document.getElementById('kpi-ahorro').innerText = formatCurrency(state.ahorroRealDepositado);
+            document.getElementById('ahorro-meta-info').innerText = `Meta Proyectada: L. ${state.metaAhorroMonto.toFixed(2)}`;
+
+            let totalFijos = 0, totalVariables = 0;
+            let fijosDaniel = 0, variablesDaniel = 0;
+            let fijosPamela = 0, variablesPamela = 0;
+
+            const categoryTotals = {};
+
+            const listFijosContainer = document.getElementById('lista-gastos-fijos');
+            const listVariablesContainer = document.getElementById('lista-gastos-variables');
+            listFijosContainer.innerHTML = '';
+            listVariablesContainer.innerHTML = '';
+
+            state.gastos.forEach((gasto, index) => {
+                const isP1 = (gasto.responsable === state.partnerConfig.nameP1 || gasto.responsable === 'Daniel');
+                
+                if (!categoryTotals[gasto.categoria]) categoryTotals[gasto.categoria] = 0;
+                categoryTotals[gasto.categoria] += parseFloat(gasto.monto);
+
+                if (gasto.tipo === 'Fijo') {
+                    totalFijos += parseFloat(gasto.monto);
+                    if(isP1) fijosDaniel += parseFloat(gasto.monto);
+                    else fijosPamela += parseFloat(gasto.monto);
+                    renderGastoRow(listFijosContainer, gasto, index);
+                } else {
+                    totalVariables += parseFloat(gasto.monto);
+                    if(isP1) variablesDaniel += parseFloat(gasto.monto);
+                    else variablesPamela += parseFloat(gasto.monto);
+                    renderGastoRow(listVariablesContainer, gasto, index);
+                }
+            });
+
+            document.getElementById('no-fijos-alert').style.display = totalFijos === 0 ? 'block' : 'none';
+            document.getElementById('no-variables-alert').style.display = totalVariables === 0 ? 'block' : 'none';
+            document.getElementById('total-fijos').innerText = formatCurrency(totalFijos);
+            document.getElementById('total-variables').innerText = formatCurrency(totalVariables);
+
+            const totalGastos = totalFijos + totalVariables;
+            document.getElementById('kpi-gastos').innerText = formatCurrency(totalGastos);
+
+            let percentGastado = totalIngresos > 0 ? (totalGastos / totalIngresos) * 100 : 0;
+            document.getElementById('percent-gastado').innerText = `${percentGastado.toFixed(1)}% Gastado`;
+            
+            const barGastado = document.getElementById('bar-gastado');
+            barGastado.style.width = `${Math.min(percentGastado, 100)}%`;
+            barGastado.className = percentGastado > 90 ? "bg-rose-500 h-1.5 rounded-full" : (percentGastado > 70 ? "bg-amber-500 h-1.5 rounded-full" : "bg-emerald-500 h-1.5 rounded-full");
+
+            const saldoDisponible = totalIngresos - totalGastos - state.ahorroRealDepositado;
+            const kpiSaldo = document.getElementById('kpi-saldo');
+            const cardSaldo = document.getElementById('kpi-saldo-card');
+            const statusSaldo = document.getElementById('kpi-saldo-status');
+            const iconSaldo = document.getElementById('kpi-saldo-icon');
+
+            kpiSaldo.innerText = formatCurrency(saldoDisponible);
+            if (saldoDisponible < 0) {
+                kpiSaldo.className = "text-2xl font-bold text-rose-600 mt-1";
+                cardSaldo.className = "bg-white rounded-2xl p-6 shadow-sm border border-rose-200 hover:shadow-md transition-all duration-300 ring-2 ring-rose-500/10";
+                statusSaldo.innerText = "Déficit / Alerta";
+                statusSaldo.className = "text-xs font-semibold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full";
+                iconSaldo.className = "p-3 bg-rose-50 text-rose-600 rounded-xl";
+            } else if (saldoDisponible > 0 && totalGastos > 0) {
+                kpiSaldo.className = "text-2xl font-bold text-emerald-600 mt-1";
+                cardSaldo.className = "bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 hover:shadow-md transition-all duration-300";
+                statusSaldo.innerText = "Superávit";
+                statusSaldo.className = "text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full";
+                iconSaldo.className = "p-3 bg-emerald-50 text-emerald-600 rounded-xl";
+            } else {
+                kpiSaldo.className = "text-2xl font-bold text-slate-900 mt-1";
+                cardSaldo.className = "bg-white rounded-2xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-all duration-300";
+                statusSaldo.innerText = "Equilibrado";
+                statusSaldo.className = "text-xs font-semibold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-full";
+                iconSaldo.className = "p-3 bg-slate-50 text-slate-600 rounded-xl";
+            }
+
+            document.getElementById('resumen-ingreso-daniel').innerText = formatCurrency(ingresosDaniel);
+            document.getElementById('resumen-fijos-daniel').innerText = formatCurrency(fijosDaniel);
+            document.getElementById('resumen-variables-daniel').innerText = formatCurrency(variablesDaniel);
+            document.getElementById('resumen-total-gastos-daniel').innerText = formatCurrency(fijosDaniel + variablesDaniel);
+
+            document.getElementById('resumen-ingreso-pamela').innerText = formatCurrency(ingresosPamela);
+            document.getElementById('resumen-fijos-pamela').innerText = formatCurrency(fijosPamela);
+            document.getElementById('resumen-variables-pamela').innerText = formatCurrency(variablesPamela);
+            document.getElementById('resumen-total-gastos-pamela').innerText = formatCurrency(fijosPamela + variablesPamela);
+
+            renderChart(categoryTotals);
+            updateHealthAudit(totalIngresos, totalGastos, state.ahorroRealDepositado);
+
+            if (shouldSave) {
+                saveToLocalStorage();
+            }
+        }
+
+        function formatCurrency(monto) {
+            return 'L. ' + (parseFloat(monto) || 0).toLocaleString('es-HN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function renderIngresoRow(container, ingreso, index) {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50/60 transition";
+            
+            let displayName = ingreso.responsable;
+            if (displayName === 'P1') displayName = state.partnerConfig.nameP1;
+            if (displayName === 'P2') displayName = state.partnerConfig.nameP2;
+            
+            const isP1 = displayName === state.partnerConfig.nameP1;
+            const colorResponsable = isP1 ? 'bg-indigo-100 text-indigo-800' : 'bg-teal-100 text-teal-800';
+            
+            tr.innerHTML = `
+                <td class="py-3 px-4"><span class="px-2 py-1 rounded-lg text-xs font-bold ${colorResponsable}">${displayName}</span></td>
+                <td class="py-3 px-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100"><i class="fa-solid fa-tag mr-1 text-[10px]"></i>${ingreso.categoria}</span></td>
+                <td class="py-3 px-4 text-slate-700 font-medium">${ingreso.nombre}</td>
+                <td class="py-3 px-4 text-right font-semibold text-emerald-600">${formatCurrency(ingreso.monto)}</td>
+                <td class="py-3 px-4 text-center">
+                    <div class="flex items-center justify-center space-x-1.5">
+                        <button onclick="editIngresoExtra(${index})" class="text-slate-400 hover:text-slate-800 p-1"><i class="fa-solid fa-pen-to-square text-sm"></i></button>
+                        <button onclick="deleteIngresoExtra(${index})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                    </div>
+                </td>
+            `;
+            container.appendChild(tr);
+        }
+
+        function renderGastoRow(container, gasto, index) {
+            const tr = document.createElement('tr');
+            tr.className = "hover:bg-slate-50/60 transition";
+            
+            let displayName = gasto.responsable;
+            if (displayName === 'Daniel') displayName = state.partnerConfig.nameP1;
+            if (displayName === 'Pamela') displayName = state.partnerConfig.nameP2;
+            
+            const isP1 = displayName === state.partnerConfig.nameP1;
+            const colorResponsable = isP1 ? 'bg-indigo-100 text-indigo-800' : 'bg-teal-100 text-teal-800';
+            
+            tr.innerHTML = `
+                <td class="py-3 px-4"><span class="px-2 py-1 rounded-lg text-xs font-bold ${colorResponsable}">${displayName}</span></td>
+                <td class="py-3 px-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeClass(gasto.categoria)}">${gasto.categoria}</span></td>
+                <td class="py-3 px-4 text-slate-700 font-medium">${gasto.nombre}</td>
+                <td class="py-3 px-4 text-right font-semibold text-slate-900">${formatCurrency(gasto.monto)}</td>
+                <td class="py-3 px-4 text-center">
+                    <div class="flex items-center justify-center space-x-1.5">
+                        <button onclick="editGasto(${index})" class="text-slate-400 hover:text-slate-800 p-1"><i class="fa-solid fa-pen-to-square text-sm"></i></button>
+                        <button onclick="deleteGasto(${index})" class="text-slate-400 hover:text-rose-600 p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                    </div>
+                </td>
+            `;
+            container.appendChild(tr);
+        }
+
+        function getCategoryBadgeClass(categoria) {
+            const map = {
+                'Alquiler/Vivienda': 'bg-blue-50 text-blue-700 border border-blue-200',
+                'Servicios Básicos': 'bg-cyan-50 text-cyan-700 border border-cyan-200',
+                'Alimentación': 'bg-amber-50 text-amber-700 border border-amber-200',
+                'Iglesia': 'bg-yellow-50 text-yellow-800 border border-yellow-200',
+                'Tarjetas/Créditos': 'bg-red-50 text-red-700 border border-red-200',
+                'Educación': 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+                'Seguros/Salud': 'bg-teal-50 text-teal-700 border border-teal-200',
+                'Suscripciones': 'bg-slate-100 text-slate-700 border border-slate-300',
+                'Otros Fijos': 'bg-slate-50 text-slate-600 border border-slate-200',
+                
+                'Salidas/Restaurantes': 'bg-rose-50 text-rose-700 border border-rose-200',
+                'Ropa/Calzado': 'bg-purple-50 text-purple-700 border border-purple-200',
+                'Cuidado Personal': 'bg-pink-50 text-pink-700 border border-pink-200',
+                'Combustible/Transporte': 'bg-orange-50 text-orange-700 border border-orange-200',
+                'Regalos/Detalles': 'bg-lime-50 text-lime-700 border border-lime-200',
+                'Ocio/Entretenimiento': 'bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200',
+                'Imprevistos/Reparaciones': 'bg-red-50 text-red-700 border border-red-200',
+                'Gustos Propios': 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+                'Otros Variables': 'bg-zinc-100 text-zinc-700 border border-zinc-200'
+            };
+            return map[categoria] || 'bg-slate-50 text-slate-700';
+        }
+
+        function openAddModal(tipo) {
+            document.getElementById('form-gasto').reset();
+            document.getElementById('gasto-index').value = '';
+            document.getElementById('gasto-tipo').value = tipo;
+            document.getElementById('modal-title').innerText = tipo === 'Fijo' ? 'Nuevo Gasto Fijo' : 'Nuevo Gasto Extra / Variable';
+
+            const selectCat = document.getElementById('gasto-categoria');
+            selectCat.innerHTML = '';
+            const listaArr = tipo === 'Fijo' ? categoriasFijos : categoriasVariables;
+            listaArr.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c; opt.innerText = c;
+                selectCat.appendChild(opt);
+            });
+
+            document.getElementById('modal-gasto').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-gasto').classList.add('hidden');
+        }
+
+        function saveGasto(e) {
+            e.preventDefault();
+            const index = document.getElementById('gasto-index').value;
+            const tipo = document.getElementById('gasto-tipo').value;
+            let responsable = document.getElementById('gasto-responsable').value;
+            
+            if (responsable === 'Daniel') responsable = state.partnerConfig.nameP1;
+            if (responsable === 'Pamela') responsable = state.partnerConfig.nameP2;
+
+            const categoria = document.getElementById('gasto-categoria').value;
+            const textNombre = document.getElementById('gasto-nombre').value.trim();
+            const monto = parseFloat(document.getElementById('gasto-monto').value);
+
+            if (!textNombre || isNaN(monto)) return;
+
+            const nuevoGasto = { responsable, tipo, categoria, nombre: textNombre, monto };
+
+            if (index === '') {
+                state.gastos.push(nuevoGasto);
+            } else {
+                state.gastos[parseInt(index)] = nuevoGasto;
+            }
+
+            closeModal();
+            calculateAll(true);
+            showToast('Registro de gasto guardado.');
+        }
+
+        function editGasto(index) {
+            const g = state.gastos[index];
+            openAddModal(g.tipo);
+            document.getElementById('gasto-index').value = index;
+            
+            if (g.responsable === state.partnerConfig.nameP1 || g.responsable === 'Daniel') {
+                document.getElementById('gasto-responsable').value = 'Daniel';
+            } else {
+                document.getElementById('gasto-responsable').value = 'Pamela';
+            }
+            
+            document.getElementById('gasto-categoria').value = g.categoria;
+            document.getElementById('gasto-nombre').value = g.nombre;
+            document.getElementById('gasto-monto').value = g.monto;
+        }
+
+        function deleteGasto(index) {
+            if (confirm("¿Estás seguro de querer borrar este gasto?")) {
+                state.gastos.splice(index, 1);
+                calculateAll(false);
+            }
+        }
+
+        function openAddIngresoModal() {
+            document.getElementById('form-ingreso-extra').reset();
+            document.getElementById('ingreso-index').value = '';
+            document.getElementById('modal-ingreso-extra').classList.remove('hidden');
+        }
+
+        function closeIngresoModal() {
+            document.getElementById('modal-ingreso-extra').classList.add('hidden');
+        }
+
+        function saveIngresoExtra(e) {
+            e.preventDefault();
+            const index = document.getElementById('ingreso-index').value;
+            let responsable = document.getElementById('ingreso-responsable').value;
+            
+            if (responsable === 'P1') responsable = state.partnerConfig.nameP1;
+            if (responsable === 'P2') responsable = state.partnerConfig.nameP2;
+
+            const categoria = document.getElementById('ingreso-categoria').value;
+            const textNombre = document.getElementById('ingreso-nombre').value.trim();
+            const monto = parseFloat(document.getElementById('ingreso-monto').value);
+
+            if (!textNombre || isNaN(monto)) return;
+
+            const nuevo = { responsable, categoria, nombre: textNombre, monto };
+
+            if (index === '') state.ingresosExtras.push(nuevo);
+            else state.ingresosExtras[parseInt(index)] = nuevo;
+
+            closeIngresoModal();
+            calculateAll(true);
+            showToast('Ingreso extra guardado.');
+        }
+
+        function editIngresoExtra(index) {
+            const i = state.ingresosExtras[index];
+            openAddIngresoModal();
+            document.getElementById('ingreso-index').value = index;
+            
+            if (i.responsable === state.partnerConfig.nameP1 || i.responsable === 'Daniel') {
+                document.getElementById('inc-responsable').value = 'P1';
+            } else {
+                document.getElementById('inc-responsable').value = 'P2';
+            }
+            
+            document.getElementById('ingreso-categoria').value = i.categoria;
+            document.getElementById('ingreso-nombre').value = i.nombre;
+            document.getElementById('ingreso-monto').value = i.monto;
+        }
+
+        function deleteIngresoExtra(index) {
+            if (confirm("¿Eliminar este registro de ingreso adicional?")) {
+                state.ingresosExtras.splice(index, 1);
+                calculateAll(false);
+            }
+        }
+
+        function updateHealthAudit(ingresos, gastos, ahorro) {
+            const txtE = document.getElementById('salud-emoji');
+            const txtT = document.getElementById('salud-titulo');
+            const txtD = document.getElementById('salud-descripcion');
+            const bar = document.getElementById('bar-capacidad-ahorro');
+            const num = document.getElementById('salud-capacidad-ahorro');
+
+            if (ingresos === 0) {
+                txtE.innerText = '🤔'; txtT.innerText = 'Sin Datos'; txtD.innerText = 'Introduce ingresos.';
+                bar.style.width = '0%'; num.innerText = '0%'; return;
+            }
+
+            const cap = (ahorro / ingresos) * 100;
+            num.innerText = `${cap.toFixed(1)}%`;
+            bar.style.width = `${Math.min(cap, 100)}%`;
+
+            const gPercent = (gastos / ingresos) * 100;
+
+            if (gPercent > 100) {
+                txtE.innerText = '🚨'; txtT.innerText = 'Peligro Crítico'; txtD.innerText = 'Gastos superan los ingresos.';
+            } else if (cap >= 20) {
+                txtE.innerText = '🏆'; txtT.innerText = 'Salud Excelente'; txtD.innerText = 'Ahorro superior al 20%.';
+            } else if (cap >= 10) {
+                txtE.innerText = '👍'; txtT.innerText = 'Presupuesto Sano'; txtD.innerText = 'Buen nivel de ahorro.';
+            } else if (gPercent < 70) {
+                txtE.innerText = '🔋'; txtT.innerText = 'Capital Libre'; txtD.innerText = 'Bajos gastos, aumenten ahorro.';
+            } else {
+                txtE.innerText = '⚠️'; txtT.innerText = 'Zona Ajustada'; txtD.innerText = 'Ahorro bajo, revisen gastos.';
+            }
+        }
+
+        function toggleSummaryDashboard() {
+            const content = document.getElementById('summary-dashboard-content');
+            const chevron = document.getElementById('summary-chevron');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+                renderSummaryDashboard();
+            } else {
+                content.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
+        function renderSummaryDashboard() {
+            const tbody = document.getElementById('resumen-general-rows');
+            tbody.innerHTML = '';
+
+            if (trackedMonthsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-400 text-xs">No hay registros mensuales procesados.</td></tr>`;
+                return;
+            }
+
+            trackedMonthsList.forEach(mKey => {
+                const storageKey = `presupuesto_pareja_${mKey}`;
+                const raw = localStorage.getItem(storageKey);
+                let sAnterior = 0, sDaniel = 0, sPamela = 0, sExtras = 0, sGastos = 0, sAhorro = 0;
+
+                if (raw) {
+                    try {
+                        const parsed = JSON.parse(raw);
+                        sAnterior = parsed.montoMesAnterior || 0;
+                        sDaniel = parsed.salariosBase?.daniel || 0;
+                        sPamela = parsed.salariosBase?.pamela || 0;
+                        sAhorro = parsed.ahorroRealDepositado || 0;
+                        if(parsed.ingresosExtras) parsed.ingresosExtras.forEach(e => sExtras += parseFloat(e.monto || 0));
+                        if(parsed.gastos) parsed.gastos.forEach(g => sGastos += parseFloat(g.monto || 0));
+                    } catch(e) {}
+                }
+
+                const sIngresosPropios = sDaniel + sPamela + sExtras;
+                const totalIngresosMes = sAnterior + sIngresosPropios;
+                const balanceFinal = totalIngresosMes - sGastos - sAhorro;
+
+                const [y, m] = mKey.split('-');
+                const dObj = new Date(y, m - 1, 1);
+                const nombreMes = dObj.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition text-xs";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-900 capitalize">${nombreMes}</td>
+                    <td class="py-3 px-4 text-right text-indigo-600 font-medium">${formatCurrency(sAnterior)}</td>
+                    <td class="py-3 px-4 text-right font-medium">${formatCurrency(sIngresosPropios)}</td>
+                    <td class="py-3 px-4 text-right text-rose-600 font-medium">${formatCurrency(sGastos)}</td>
+                    <td class="py-3 px-4 text-right text-emerald-600 font-semibold">${formatCurrency(sAhorro)}</td>
+                    <td class="py-3 px-4 text-right font-bold ${balanceFinal < 0 ? 'text-rose-600':'text-slate-900'}">${formatCurrency(balanceFinal)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function resetData() {
+            if (confirm("¿Limpiar por completo este mes?")) {
+                const backupConfig = state.partnerConfig;
+                const backupTheme = state.themeColor;
+                localStorage.removeItem(currentMonthKey);
+                
+                state.partnerConfig = backupConfig;
+                state.themeColor = backupTheme;
+                saveToLocalStorage();
+                loadMonthData(document.getElementById('budget-month-select').value);
+            }
+        }
+
+        function renderChart(gastos) {
+            const ctx = document.getElementById('chartGastos').getContext('2d');
+            const labels = Object.keys(gastos);
+            const data = Object.values(gastos);
+
+            if (labels.length === 0) {
+                document.getElementById('chart-no-data').classList.remove('hidden');
+                if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+                return;
+            }
+            document.getElementById('chart-no-data').classList.add('hidden');
+
+            const paleta = ['#4f46e5', '#0d9488', '#e11d48', '#d97706', '#9333ea', '#2563eb', '#16a34a', '#db2777', '#475569'];
+
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = data;
+                chartInstance.data.datasets[0].backgroundColor = paleta.slice(0, labels.length);
+                chartInstance.update();
+            } else {
+                chartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{ data: data, backgroundColor: paleta.slice(0, labels.length), borderWidth: 1 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' }
+                });
+            }
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = "flex items-center space-x-2 px-3 py-2 bg-slate-900 text-white rounded-xl text-xs font-medium shadow-md transition transform opacity-0 pointer-events-auto";
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('opacity-0'), 5);
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 200); }, 3000);
+        }
+    </script>
+
+<!-- Script para registrar el Service Worker de la PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('PWA Service Worker registrado con éxito', reg))
+                    .catch(err => console.error('Error al registrar el Service Worker', err));
+            });
+        }
+    </script>
+
+
+
+</body>
+</html>
